@@ -1,0 +1,27 @@
+<div class="stat stat-collection" id="$collection.id">
+  <h3>
+    $collection.title
+    <select onchange="toggleStatCollectionSelection(this)">
+    #for $i in range(0, len($stats))
+      #if $stats[$i]
+        <option value="$stats[$i].id">
+          $titles[$i]
+        </option>      
+      #else
+        <option disabled>&nbsp;</option>      
+      #end if
+    #end for
+    </select>
+  </h3>
+  
+  #for $stat in $stats
+    #if $stat:
+      $stat.GetHtml
+    #end if
+  #end for
+</div>
+
+## Initialize display of stat collection
+<script type="text/javascript">
+  toggleStatCollectionSelection(_("#$collection.id select").get(0));
+</script>

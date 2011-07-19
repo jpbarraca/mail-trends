@@ -1,0 +1,144 @@
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 90%;
+}
+
+h1 {
+  margin: 0;
+  text-align: center;
+}
+
+h3 {
+  margin: 0 0 0.25em 0;
+}
+
+.subtitle {
+  color: #666;
+  text-align: center;
+}
+
+.hidden {
+  display: none;
+}
+
+.stat-group {
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.stat-group .stat-group-item {
+  vertical-align: top;
+  padding: 0.5em;
+}
+
+.table-stat-container select {
+  float: right;
+}
+
+.table-stat {
+  border-spacing: 0;
+  border-collapse: collapse;
+  width: 100%;
+  clear: both;
+}
+
+.table-stat th,
+.table-stat td {
+  padding: 2px;
+}
+
+.table-stat th {
+  border-bottom: solid 2px #666;
+  background: #eee;
+  text-align: left;  
+  white-space: nowrap;
+}
+
+.table-stat td {
+  border-top: solid 1px #eee;
+}
+
+.table-stat th.size, .table-stat td.size,
+.table-stat th.length, .table-stat td.length,
+.table-stat th.count, .table-stat td.count {
+  text-align: right;
+}
+
+.table-stat td.sorting {
+  background: #f9f9f9;
+}
+
+table.top10 tr.top20,
+table.top10 tr.top40,
+table.top20 tr.top40 {
+  display: none;
+}
+
+.stat-tabs-titles {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  list-style-type: none;
+  margin-bottom: -1px;
+}
+
+.stat-tab-title {
+  float: left;
+  color: #00c;
+  font-size: 110%;
+  border: solid 1px #ccc;
+  background: #eee;
+  padding: 2px .3em;
+  margin-left: .3em;
+  cursor: pointer;
+}
+
+.stat-tab-title.selected {
+  font-weight: bold;  
+  color: #000;
+  background: #fff;
+  border-bottom-color: #fff;
+  cursor: default;
+}
+
+.stat-tab-pane {
+  border: solid 1px #ccc;
+  padding: 1em;
+}
+
+.unselectable {
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  user-select: none;
+}
+
+.clickable:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.distribution .chart {
+  vertical-align: top;
+}
+
+.legend {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.legend li {
+  margin: 0;
+  padding: 3px 0px;
+  font-size: smaller;
+  color: #333;
+  white-space: nowrap;
+}
+
+.legend .swatch {
+  float: left;
+  width: 9px;
+  height: 9px;
+  border: solid 1px #ccc;
+  margin: -1px 2px 0 0;
+}
