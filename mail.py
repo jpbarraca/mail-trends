@@ -7,6 +7,9 @@ import random
 import cache
 import messageinfo
 import stringscanner
+import os
+import email
+import time
 
 class Mail(object):
   def __init__(self, server, use_ssl, username, password,
@@ -182,3 +185,117 @@ class Mail(object):
 
   def __AssertOk(self, response):
 	  assert response == "OK"
+
+
+class MaildirInfo(object):
+  """
+  A semi-greedy Maildir crawler
+
+  This crawler is *extremely* relaxed about the Maildir spec.
+  It considers every subfolder with (sub,new,cur) folders as
+  a valid Maildir, and it recursevely walks the tree. A few
+  notes:
+
+  1. This SHOULD handle both Maildir and Maildir++
+  2. This SHOULD also handle weird non conformant Maildir
+    as long as (cur,new,tmp) exist
+  3. This does not gather flags (i.e. New or Read)
+  4. Dates might be different from the dates you see in IMAP
+  5. This will wall all folders recursively, so if you point
+     it to the root it will index all Maildirs in your hard drive.
+  6. As is this is slower than the mail.Mail class because we read
+     the entire mail contents into memory.
+
+  """
+  def __init__(self, path):
+    self.path = os.path.expanduser(path)
+    self.mailboxes = {}
+
+    for dirname, dirnames, filenames in os.walk(self.path):
+
+      for subdirname in dirnames:
+        folder = os.path.join(dirname, subdirname)
+
+        if os.path.isdir(os.path.join(folder, 'new')) and \
+            os.path.isdir(os.path.join(folder, 'cur')) and \
+            os.path.isdir(os.path.join(folder, 'tmp')):
+
+          self.mailboxes[folder] = []
+          logging.info("Found %s", folder)
+
+      for filename in filenames:
+        box = os.path.dirname(dirname)
+        if not filename.startswith('.') and box in self.mailboxes:
+          path = os.path.join(dirname, filename )
+          self.mailboxes[box].append(path)
+
+    if not self.mailboxes:
+        raise RuntimeError("No mailboxes were found")
+    self.__current_mailbox = None
+
+  def GetMailboxes(self):
+    "Return list of mailboxes in this maildir"
+    return self.mailboxes.keys()
+
+  def SelectMailbox(self, mailbox):
+    "Set the current mailbox"
+
+    logging.info("Selecting mailbox '%s'", mailbox)
+    self.__current_mailbox = mailbox
+
+  def GetMessageInfos(self):
+    """
+    Return a list of MessageInfo objects, one per message
+
+    If the current mailbox has been selected, only mails from
+    that mailbox are selected, otherwise all mails are returned.
+    """
+
+    if self.__current_mailbox and self.mailboxes.has_key(self.__current_mailbox):
+      boxes = [self.__current_mailbox]
+    else:
+      boxes = self.GetMailboxes()
+
+    info = []
+    for mbox in boxes:
+      for path in self.mailboxes[mbox]:
+        mi = messageinfo.MessageInfo()
+
+        msg = email.message_from_file(open(path))
+
+        # FIXME: there has to be a better way to do this
+        # e.g. Just read the headers and stat the file
+        mi.PopulateField('RFC822.SIZE', len(msg.as_string()) )
+        mi.PopulateField('RFC822.HEADER', self.__BuildHeader(msg) )
+
+        if not msg.has_key("Date"):
+            print("Unable to parse mail, skipping ", path)
+            continue
+
+        date = email.utils.parsedate_tz(msg["Date"])
+        t = time.gmtime(email.utils.mktime_tz(date))
+        maildate = time.strftime("%d-%b-%Y %H:%M:%S", t) + ' %+05d' % (date[9]/3600)
+        mi.PopulateField('INTERNALDATE', maildate)
+
+        info.append(mi)
+
+    return info
+
+  def __BuildHeader(self, msg):
+    """
+    From a dict of header name/value build the
+    email header
+    """
+    header = ''
+    for k in msg.keys():
+      header += '%s: %s\r\n' % (k, msg[k])
+    return header
+
+  def Logout(self):
+    "Do nothing"
+    pass
+
+
+
+
+
