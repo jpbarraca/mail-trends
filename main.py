@@ -22,7 +22,7 @@ import stats.table
 def GetOptsMap():
   opts, args = getopt.getopt(sys.argv[1:], "", [
       # Standard options
-      "username=", "password=", "use_ssl", "server=", "maildir=",
+      "username=", "password=", "use_ssl", "server=", "maildir=","mailboxpackage=",
 
       # Other params
       "filter_out=", "me=",
@@ -37,7 +37,8 @@ def GetOptsMap():
 	print "\t--username=<login>\t\tThe login to use when connecting to the server"
 	print "\t--password=<password>\t\tThe password to use when connecting to the server"
 	print "\t--server=<server_address>\t\tThe IP address or DNS name of the server"
-        print "\t--maildir=path\t\t\tRead emails from maildir folders"
+	print "\t--maildir=path\t\t\tRead emails from maildir folders"
+	print "\t--mailboxpackage=path\t\t\tRead emails from mailbox packages (Mail.app)"
 	print "\nOptions"
 	print "\t--filter_out=<filter>\t\tRegular expression to filter results"
 	print "\t--me=<address>\t\t\tYour email address"
@@ -50,6 +51,9 @@ def GetOptsMap():
     opts_map[name[2:]] = value
 
   if "maildir" in opts_map:
+    return opts_map
+
+  if "mailboxpackage" in opts_map:
     return opts_map
 
   assert "username" in opts_map
@@ -68,11 +72,14 @@ def GetMessageInfos(opts):
   if "maildir" in opts:
     m = mail.MaildirInfo(opts["maildir"])
   else:
-    m = mail.Mail(
-      opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
-      "record" in opts, "replay" in opts,
-      "max_messages" in opts and int(opts["max_messages"]) or -1,
-      "random_subset" in opts)
+    if "mailboxpackage" in opts:
+      m = mail.MailBoxPackageInfo(opts["mailboxpackage"])
+    else:
+      m = mail.Mail(
+        opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
+        "record" in opts, "replay" in opts,
+        "max_messages" in opts and int(opts["max_messages"]) or -1,
+        "random_subset" in opts)
 
   message_infos =[]
 
