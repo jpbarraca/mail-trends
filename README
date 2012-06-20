@@ -22,3 +22,8 @@ Example usage:
 
 ./main.py --server=mail.domain.com --username=guest --password=1234 --use_ssl
 
+or reading a local Maildir folder
+
+./main.py --maildir=~/Mail
+
+
