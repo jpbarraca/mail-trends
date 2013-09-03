@@ -25,26 +25,28 @@ def GetOptsMap():
       "username=", "password=", "use_ssl", "server=", "maildir=","mailboxpackage=",
 
       # Other params
-      "filter_out=", "me=",
+      "filter_out=", "me=","server_mailbox=",
 
       # Development options
       "record", "replay",
       "max_messages=", "random_subset",
       "skip_labels"])
+
   if len(opts) == 0:
-	print "Usage: main.py --username=<login> --password=<password> --server=<server_address> [options]"
-	print "Main Parameters"
-	print "\t--username=<login>\t\tThe login to use when connecting to the server"
-	print "\t--password=<password>\t\tThe password to use when connecting to the server"
-	print "\t--server=<server_address>\t\tThe IP address or DNS name of the server"
-	print "\t--maildir=path\t\t\tRead emails from maildir folders"
-	print "\t--mailboxpackage=path\t\t\tRead emails from mailbox packages (Mail.app)"
-	print "\nOptions"
-	print "\t--filter_out=<filter>\t\tRegular expression to filter results"
-	print "\t--me=<address>\t\t\tYour email address"
-	print "\t--use_ssl\t\tConnect to server using SSL"
-	print "\n"
-	sys.exit()
+   print "Usage: main.py --username=<login> --password=<password> --server=<server_address> [options]"
+   print "Main Parameters"
+   print "\t--username=<login>\t\tThe login to use when connecting to the server"
+   print "\t--password=<password>\t\tThe password to use when connecting to the server"
+   print "\t--server=<server_address>\tThe IP address or DNS name of the server"
+   print "\t--maildir=path\t\t\tRead emails from maildir folders"
+   print "\t--mailboxpackage=path\t\tRead emails from mailbox packages (Mail.app)"
+   print "\nOptions"
+   print "\t--filter_out=<filter>\t\tRegular expression to filter results"
+   print "\t--me=<address>\t\t\tYour email address"
+   print "\t--use_ssl\t\t\tConnect to server using SSL"
+   print "\t--server_mailbox=<inbox,mb1>\tOnly consider the given mailboxes in IMAP server"
+   print "\n"
+   sys.exit()
 
   opts_map = {}
   for name, value in opts:
@@ -61,7 +63,7 @@ def GetOptsMap():
   if "password" not in opts_map:
     opts_map["password"] = getpass.getpass(
         prompt="Password for %s: " % opts_map["username"])
-
+  print opts_map
   assert "password" in opts_map
   assert "server" in opts_map
 
@@ -79,9 +81,12 @@ def GetMessageInfos(opts):
         opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
         "record" in opts, "replay" in opts,
         "max_messages" in opts and int(opts["max_messages"]) or -1,
-        "random_subset" in opts)
+        "random_subset" in opts,)
 
   message_infos =[]
+  server_mailbox = []
+  if "server_mailbox" in opts:
+    server_mailbox = opts['server_mailbox'].split(",")
 
   # Then for each mailbox, see which messages are in it, and attach that to
   # the mail info
@@ -92,6 +97,10 @@ def GetMessageInfos(opts):
   messageinfo.MessageInfo.SetParseDate(False)
 
   for mailbox in m.GetMailboxes():
+    if len(server_mailbox) > 0:
+        if not mailbox in server_mailbox:
+            continue
+
     m.SelectMailbox(mailbox)
     mb_message_infos = m.GetMessageInfos()
     for message_info in mb_message_infos:
