@@ -9,8 +9,10 @@ Mail Trends lets you analyze and visualize your email (as extracted from an IMAP
 * Distributions of senders, recipients and mailing lists over time
 * The distribution of thread lengths and the lists and people that result in the longest threads
 
-![Mail Trends example](mailtrends.png?raw=true "Example output. Runtime:  3616.67s user 67.15s system 98% cpu 1:05:30.53 total")
-
+![Mail Trends example](mailtrends.png?raw=true "Example output.")
+```
+Runtime:  3616.67s user 67.15s system 98% cpu 1:05:30.53 total
+```
 
 This package was modified from the original in order to fix some errors, greatly improve its performance, reduce memory consumption, and to add support for a larger amount of servers, and email origins. 
 
