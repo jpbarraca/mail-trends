@@ -195,7 +195,11 @@ def FilterMessageInfos(message_infos, filter_param):
 def ExtractThreads(message_infos):
     thread_messages = []
     for message_info in message_infos:
-        thread_message = jwzthreading.make_message(message_info.headers)
+        try:
+            thread_message = jwzthreading.make_message(message_info.headers)
+        except ValueError:
+            continue
+
         if thread_message:
             thread_message.message_info = message_info
             thread_messages.append(thread_message)
