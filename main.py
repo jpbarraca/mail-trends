@@ -19,267 +19,271 @@ import stats.bucket
 import stats.group
 import stats.table
 
+
 def GetOptsMap():
-  opts, args = getopt.getopt(sys.argv[1:], "", [
-      # Standard options
-      "username=", "password=", "use_ssl", "server=", "maildir=","mailboxpackage=",
+    opts, args = getopt.getopt(sys.argv[1:], "", [
+            # Standard options
+            "username=", "password=", "use_ssl", "server=", "maildir=","mailboxpackage=",
 
-      # Other params
-      "filter_out=", "me=","server_mailbox=",
+            # Other params
+            "filter_out=", "me=","server_mailbox=",
 
-      # Development options
-      "record", "replay",
-      "max_messages=", "random_subset",
-      "skip_labels"])
+            # Development options
+            "record", "replay",
+            "max_messages=", "random_subset",
+            "skip_labels"])
 
-  if len(opts) == 0:
-   print "Usage: main.py --username=<login> --password=<password> --server=<server_address> [options]"
-   print "Main Parameters"
-   print "\t--username=<login>\t\tThe login to use when connecting to the server"
-   print "\t--password=<password>\t\tThe password to use when connecting to the server"
-   print "\t--server=<server_address>\tThe IP address or DNS name of the server"
-   print "\t--maildir=path\t\t\tRead emails from maildir folders"
-   print "\t--mailboxpackage=path\t\tRead emails from mailbox packages (Mail.app)"
-   print "\nOptions"
-   print "\t--filter_out=<filter>\t\tRegular expression to filter results"
-   print "\t--me=<address>\t\t\tYour email address"
-   print "\t--use_ssl\t\t\tConnect to server using SSL"
-   print "\t--server_mailbox=<inbox,mb1>\tOnly consider the given mailboxes in IMAP server"
-   print "\n"
-   sys.exit()
+    if len(opts) == 0:
+        print "Usage: main.py --username=<login> --password=<password> --server=<server_address> [options]"
+        print "Main Parameters"
+        print "\t--username=<login>\t\tThe login to use when connecting to the server"
+        print "\t--password=<password>\t\tThe password to use when connecting to the server"
+        print "\t--server=<server_address>\tThe IP address or DNS name of the server"
+        print "\t--maildir=path\t\t\tRead emails from maildir folders"
+        print "\t--mailboxpackage=path\t\tRead emails from mailbox packages (Mail.app)"
+        print "\nOptions"
+        print "\t--filter_out=<filter>\t\tRegular expression to filter results"
+        print "\t--me=<address>\t\t\tYour email address"
+        print "\t--use_ssl\t\t\tConnect to server using SSL"
+        print "\t--server_mailbox=<inbox,mb1>\tOnly consider the given mailboxes in IMAP server"
+        print "\n"
+        sys.exit()
 
-  opts_map = {}
-  for name, value in opts:
-    opts_map[name[2:]] = value
+    opts_map = {}
+    for name, value in opts:
+        opts_map[name[2:]] = value
 
-  if "maildir" in opts_map:
-    return opts_map
+    if "maildir" in opts_map:
+        return opts_map
 
-  if "mailboxpackage" in opts_map:
-    return opts_map
+    if "mailboxpackage" in opts_map:
+        return opts_map
 
-  assert "username" in opts_map
+    assert "username" in opts_map
 
-  if "password" not in opts_map:
-    opts_map["password"] = getpass.getpass(
-        prompt="Password for %s: " % opts_map["username"])
-  print opts_map
-  assert "password" in opts_map
-  assert "server" in opts_map
+    if "password" not in opts_map:
+        opts_map["password"] = getpass.getpass(prompt="Password for %s: " % opts_map["username"])
 
-  return opts_map
+    print opts_map
+
+    assert "password" in opts_map
+    assert "server" in opts_map
+
+    return op
+
 
 def GetMessageInfos(opts):
 
-  if "maildir" in opts:
-    m = mail.MaildirInfo(opts["maildir"])
-  else:
-    if "mailboxpackage" in opts:
-      m = mail.MailBoxPackageInfo(opts["mailboxpackage"])
+    if "maildir" in opts:
+        m = mail.MaildirInfo(opts["maildir"])
     else:
-      m = mail.Mail(
-        opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
-        "record" in opts, "replay" in opts,
-        "max_messages" in opts and int(opts["max_messages"]) or -1,
-        "random_subset" in opts,)
+        if "mailboxpackage" in opts:
+            m = mail.MailBoxPackageInfo(opts["mailboxpackage"])
+        else:
+            m = mail.Mail(
+                opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
+                "record" in opts, "replay" in opts,
+                "max_messages" in opts and int(opts["max_messages"]) or -1,
+                "random_subset" in opts,)
 
-  message_infos =[]
-  server_mailbox = []
-  if "server_mailbox" in opts:
-    server_mailbox = opts['server_mailbox'].split(",")
+    message_infos = []
+    server_mailbox = []
+    if "server_mailbox" in opts:
+        server_mailbox = opts['server_mailbox'].split(",")
 
-  # Then for each mailbox, see which messages are in it, and attach that to
-  # the mail info
-  #if "skip_labels" not in opts:
+    # Then for each mailbox, see which messages are in it, and attach that to
+    # the mail info
+    #if "skip_labels" not in opts:
 
-    # Don't want to parse all these dates, since we already have them from the
-    # message infos above.
-  messageinfo.MessageInfo.SetParseDate(False)
+        # Don't want to parse all these dates, since we already have them from the
+        # message infos above.
+    messageinfo.MessageInfo.SetParseDate(False)
 
-  for mailbox in m.GetMailboxes():
-    if len(server_mailbox) > 0:
-        if not mailbox in server_mailbox:
-            continue
+    for mailbox in m.GetMailboxes():
+        if len(server_mailbox) > 0:
+            if mailbox not in server_mailbox:
+                continue
 
-    m.SelectMailbox(mailbox)
-    mb_message_infos = m.GetMessageInfos()
-    for message_info in mb_message_infos:
-        message_info.AddMailbox(mailbox)
-    message_infos.extend(mb_message_infos)
-    logging.info("Mailbox had %d messages. Total=%d",len(mb_message_infos),len(message_infos))
+        m.SelectMailbox(mailbox)
+        mb_message_infos = m.GetMessageInfos()
+        for message_info in mb_message_infos:
+                message_info.AddMailbox(mailbox)
+        message_infos.extend(mb_message_infos)
+        logging.info("Mailbox had %d messages. Total=%d",len(mb_message_infos),len(message_infos))
 
-  message_infos_by_id = \
-        dict([(mi.GetMessageId(), mi) for mi in message_infos])
-  messageinfo.MessageInfo.SetParseDate(True)
+    message_infos_by_id = dict([(mi.GetMessageId(), mi) for mi in message_infos])
+    messageinfo.MessageInfo.SetParseDate(True)
 
-  m.Logout()
+    m.Logout()
 
-  # Filter out those that we're not interested in
-  if "filter_out" in opts:
-    message_infos = FilterMessageInfos(message_infos, opts["filter_out"])
+    # Filter out those that we're not interested in
+    if "filter_out" in opts:
+        message_infos = FilterMessageInfos(message_infos, opts["filter_out"])
 
-  # Tag messages as being from the user running the script
-  if "me" in opts:
-    logging.info("Identifying \"me\" messages")
-    me_addresses = [
-        address.lower().strip() for address in opts["me"].split(",")]
+    # Tag messages as being from the user running the script
+    if "me" in opts:
+        logging.info("Identifying \"me\" messages")
+        me_addresses = [address.lower().strip() for address in opts["me"].split(",")]
 
-    me_from_count = 0
-    me_to_count = 0
+        me_from_count = 0
+        me_to_count = 0
 
-    for message_info in message_infos:
-      name, address = message_info.GetSender()
+        for message_info in message_infos:
+            name, address = message_info.GetSender()
 
-      for me_address in me_addresses:
-        if me_address == address:
-          message_info.is_from_me = True
-          me_from_count += 1
-          break
+            for me_address in me_addresses:
+                if me_address == address:
+                    message_info.is_from_me = True
+                    me_from_count += 1
+                    break
 
-      for name, address in message_info.GetRecipients():
-        for me_address in me_addresses:
-          if me_address == address:
-            message_info.is_to_me = True
-            me_to_count += 1
-            break
-        if message_info.is_to_me: break
+            for name, address in message_info.GetRecipients():
+                for me_address in me_addresses:
+                    if me_address == address:
+                        message_info.is_to_me = True
+                        me_to_count += 1
+                        break
+                if message_info.is_to_me:
+                    break
 
-    logging.info("  %d messages are from \"me\"" % me_from_count)
-    logging.info("  %d messages are to \"me\"" % me_to_count)
+        logging.info("  %d messages are from \"me\"" % me_from_count)
+        logging.info("  %d messages are to \"me\"" % me_to_count)
 
-  return message_infos
+    return message_infos
+
 
 def FilterMessageInfos(message_infos, filter_param):
-  logging.info("Filtering messages")
-  remaining_message_infos = []
+    logging.info("Filtering messages")
+    remaining_message_infos = []
 
-  filters = []
-  raw_filters = filter_param.split(",")
-  for raw_filter in raw_filters:
-    operator, value = raw_filter.strip().split(":", 1)
-    filters.append([operator, value.lower()])
+    filters = []
+    raw_filters = filter_param.split(",")
+    for raw_filter in raw_filters:
+        operator, value = raw_filter.strip().split(":", 1)
+        filters.append([operator, value.lower()])
 
-  for message_info in message_infos:
-    filtered_out = False
-    for operator, operator_value in filters:
-      if operator == "to":
-        pairs = message_info.GetRecipients()
-      elif operator == "from":
-        pairs = [message_info.GetSender()]
-      elif operator == "list":
-        pairs = [message_info.GetListId()]
-      else:
-        raise AssertionError("unknown operator: %s" % operator)
+    for message_info in message_infos:
+        filtered_out = False
+        for operator, operator_value in filters:
+            if operator == "to":
+                pairs = message_info.GetRecipients()
+            elif operator == "from":
+                pairs = [message_info.GetSender()]
+            elif operator == "list":
+                pairs = [message_info.GetListId()]
+            else:
+                raise AssertionError("unknown operator: %s" % operator)
 
-      values = [name and name.lower() or "" for name, address in pairs] + \
-               [address and address.lower() or "" for name, address in pairs]
+            values = [name and name.lower() or "" for name, address in pairs] + \
+                        [address and address.lower() or "" for name, address in pairs]
 
-      for value in values:
-        if value.find(operator_value) != -1:
-          filtered_out = True
-          break
+            for value in values:
+                if value.find(operator_value) != -1:
+                    filtered_out = True
+                    break
 
-      if filtered_out:
-        break
+            if filtered_out:
+                break
 
-    if not filtered_out:
-      remaining_message_infos.append(message_info)
+        if not filtered_out:
+            remaining_message_infos.append(message_info)
 
-  logging.info("  %d messages remaining" % len(remaining_message_infos))
-  return remaining_message_infos
+    logging.info("  %d messages remaining" % len(remaining_message_infos))
+    return remaining_message_infos
+
 
 def ExtractThreads(message_infos):
-  thread_messages = []
-  for message_info in message_infos:
-    thread_message = jwzthreading.make_message(message_info.headers)
-    if thread_message:
-      thread_message.message_info = message_info
-      thread_messages.append(thread_message)
+    thread_messages = []
+    for message_info in message_infos:
+        thread_message = jwzthreading.make_message(message_info.headers)
+        if thread_message:
+            thread_message.message_info = message_info
+            thread_messages.append(thread_message)
 
-  thread_dict = jwzthreading.thread(thread_messages)
+    thread_dict = jwzthreading.thread(thread_messages)
 
-  containers = []
-  for subject, container in thread_dict.items():
-    # jwzthreading is too aggressive in threading by subject and will combine
-    # distinct threads that happen to have the same subject. Split them up if
-    # we have a dummy container that has lots of children at the first level.
-    if container.is_dummy() and len(container.children) >= 10:
-      for child_container in container.children:
-        child_container.subject = subject
-        containers.append(child_container)
-    else:
-      container.subject = subject
-      containers.append(container)
+    containers = []
+    for subject, container in thread_dict.items():
+        # jwzthreading is too aggressive in threading by subject and will combine
+        # distinct threads that happen to have the same subject. Split them up if
+        # we have a dummy container that has lots of children at the first level.
+        if container.is_dummy() and len(container.children) >= 10:
+            for child_container in container.children:
+                child_container.subject = subject
+                containers.append(child_container)
+        else:
+            container.subject = subject
+            containers.append(container)
 
-  return containers
+    return containers
+
 
 def InitStats(date_range):
-  s = [
-    stats.base.TitleStat(date_range),
-    stats.group.StatTabGroup(
-      (
-        "Time",
-        stats.group.StatColumnGroup(
-          stats.bucket.DayOfWeekStat(),
-          stats.bucket.TimeOfDayStat(),
-          stats.bucket.YearStat(date_range),
-        ),
-        stats.group.StatColumnGroup(
-          stats.group.MonthStatCollection(date_range),
-          stats.group.DayStatCollection(date_range),
-        ),
-      ),
-      (
-        "Size",
-        stats.group.StatColumnGroup(
-          stats.bucket.SizeBucketStat(),
-          stats.table.SizeTableStat(),
-        ),
-      ),
-      (
-        "People and Lists",
-        stats.group.StatColumnGroup(
-          stats.table.SenderTableStat(),
-          stats.group.SenderDistributionStatCollection(date_range),
-        ),
-        stats.group.StatColumnGroup(
-          stats.table.RecipientTableStat(),
-          stats.group.RecipientDistributionStatCollection(date_range),
-        ),
-        stats.group.StatColumnGroup(
-          stats.table.ListIdTableStat(),
-          stats.group.ListDistributionStatCollection(date_range),
-        ),
-      ),
-      (
-        "Me",
-        stats.group.StatColumnGroup(
-          stats.table.MeRecipientTableStat(),
-          stats.group.MeRecipientDistributionStatCollection(date_range),
-        ),
-        stats.group.StatColumnGroup(
-          stats.table.MeSenderTableStat(),
-          stats.group.MeSenderDistributionStatCollection(date_range),
-        ),
-      ),
-      (
-        "Threads",
-        stats.group.StatColumnGroup(
-          stats.bucket.ThreadSizeBucketStat(),
-          stats.table.ThreadSizeTableStat(),
-        ),
-        stats.group.StatColumnGroup(
-          stats.table.ThreadStarterTableStat(),
-          stats.table.ThreadListTableStat(),
+    s = [
+        stats.base.TitleStat(date_range),
+        stats.group.StatTabGroup(
+            (
+                "Time",
+                stats.group.StatColumnGroup(
+                    stats.bucket.DayOfWeekStat(),
+                    stats.bucket.TimeOfDayStat(),
+                    stats.bucket.YearStat(date_range),
+                ),
+                stats.group.StatColumnGroup(
+                    stats.group.MonthStatCollection(date_range),
+                    stats.group.DayStatCollection(date_range),
+                ),
+            ),
+            (
+                "Size",
+                stats.group.StatColumnGroup(
+                    stats.bucket.SizeBucketStat(),
+                    stats.table.SizeTableStat(),
+                ),
+            ),
+            (
+                "People and Lists",
+                stats.group.StatColumnGroup(
+                    stats.table.SenderTableStat(),
+                    stats.group.SenderDistributionStatCollection(date_range),
+                ),
+                stats.group.StatColumnGroup(
+                    stats.table.RecipientTableStat(),
+                    stats.group.RecipientDistributionStatCollection(date_range),
+                ),
+                stats.group.StatColumnGroup(
+                    stats.table.ListIdTableStat(),
+                    stats.group.ListDistributionStatCollection(date_range),
+                ),
+            ),
+            (
+                "Me",
+                stats.group.StatColumnGroup(
+                    stats.table.MeRecipientTableStat(),
+                    stats.group.MeRecipientDistributionStatCollection(date_range),
+                ),
+                stats.group.StatColumnGroup(
+                    stats.table.MeSenderTableStat(),
+                    stats.group.MeSenderDistributionStatCollection(date_range),
+                ),
+            ),
+            (
+                "Threads",
+                stats.group.StatColumnGroup(
+                    stats.bucket.ThreadSizeBucketStat(),
+                    stats.table.ThreadSizeTableStat(),
+                ),
+                stats.group.StatColumnGroup(
+                    stats.table.ThreadStarterTableStat(),
+                    stats.table.ThreadListTableStat(),
+                )
+            )
         )
-      )
-    )
-  ]
+    ]
 
-  return s
+    return s
 
-logging.basicConfig(level=logging.DEBUG,
-                    format="[%(asctime)s] %(message)s")
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
 
 logging.info("Initializing")
 
@@ -294,15 +298,15 @@ stats = InitStats(messageinfo.MessageInfo.GetDateRange())
 
 logging.info("Generating stats")
 for stat in stats:
-  stat.ProcessMessageInfos(message_infos, threads)
+    stat.ProcessMessageInfos(message_infos, threads)
 
 logging.info("Outputting HTML")
 
 t = Template(
     file="templates/index.tmpl",
-    searchList = {
-      "stats": stats,
-      "host": re.sub("^.*@", "", opts.get("username",''))
+    searchList={
+        "stats": stats,
+        "host": re.sub("^.*@", "", opts.get("username", ''))
     }
 )
 out = codecs.open("out/index.html", mode="w", encoding='utf-8')
