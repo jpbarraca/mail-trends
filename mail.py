@@ -10,6 +10,7 @@ import stringscanner
 import os
 import email
 import time
+import re
 
 from cStringIO import StringIO
 
@@ -264,15 +265,20 @@ class MaildirInfo(object):
             for path in self.mailboxes[mbox]:
                 mi = messageinfo.MessageInfo()
                 try:
-                    fd = open(path,"r")
+                    fd = open(path, "r")
                     fd.readline()
 
                     headers = StringIO()
+                    bytes_read = 0
                     while True:
-                        line = fd.readline()
-                        if line == '\n' or line == '':
+                        chunk = fd.read(1024)
+                        if chunk == '':
                             break
-                        headers.write(line)
+
+                        bytes_read += len(chunk)
+                        headers.write(chunk)
+                        if '\n\n' in chunk or bytes_read >= 100000:
+                            break
                     fd.close()
 
                     msg = email.message_from_string(headers.getvalue())
@@ -288,7 +294,7 @@ class MaildirInfo(object):
 
                     date = email.utils.parsedate_tz(msg["Date"])
                     t = time.gmtime(email.utils.mktime_tz(date))
-                    maildate = time.strftime("%d-%b-%Y %H:%M:%S", t) + ' %+05d' % (date[9]/3600)
+                    maildate = time.strftime("%d-%b-%Y %H:%M:%S", t) + ' %+05d' % (date[9] / 3600)
                     mi.PopulateField('INTERNALDATE', maildate)
 
                     info.append(mi)
@@ -397,11 +403,16 @@ class MailBoxPackageInfo(object):
                     fd.readline()
 
                     headers = StringIO()
+                    bytes_read = 0
                     while True:
-                        line = fd.readline()
-                        if line == '\n' or line == '':
+                        chunk = fd.read(1024)
+                        if chunk == '':
                             break
-                        headers.write(line)
+
+                        bytes_read += len(chunk)
+                        headers.write(chunk)
+                        if '\n\n' in chunk or bytes_read >= 100000:
+                            break
                     fd.close()
 
                     msg = email.message_from_string(headers.getvalue())
@@ -424,7 +435,7 @@ class MailBoxPackageInfo(object):
                 except:
                     #logging.info("ERROR: Unable to parse file: %s", path)
                     pass
-                    
+
         return info
 
     def __BuildHeader(self, msg):
@@ -432,10 +443,11 @@ class MailBoxPackageInfo(object):
         From a dict of header name/value build the
         email header
         """
-        header = ''
+        header = StringIO()
         for k in msg.keys():
-            header += '%s: %s\r\n' % (k, msg[k])
-        return header
+            if k in ['From', 'Date', 'To', 'Subject', 'Sender', 'Message-ID', 'List-Id']:
+                header.write('%s: %s\r\n' % (k, msg[k]))
+        return header.getvalue()
 
     def Logout(self):
         "Do nothing"

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-#Modified by Joao Paulo Barraca <jpbarraca@ua.pt>
+# Modified by Joao Paulo Barraca <jpbarraca@ua.pt>
 
 import codecs
 import getopt
@@ -22,16 +22,16 @@ import stats.table
 
 def GetOptsMap():
     opts, args = getopt.getopt(sys.argv[1:], "", [
-            # Standard options
-            "username=", "password=", "use_ssl", "server=", "maildir=","mailboxpackage=",
+        # Standard options
+        "username=", "password=", "use_ssl", "server=", "maildir=", "mailboxpackage=",
 
-            # Other params
-            "filter_out=", "me=","server_mailbox=",
+        # Other params
+        "filter_out=", "me=", "server_mailbox=",
 
-            # Development options
-            "record", "replay",
-            "max_messages=", "random_subset",
-            "skip_labels"])
+        # Development options
+        "record", "replay",
+        "max_messages=", "random_subset",
+        "skip_labels"])
 
     if len(opts) == 0:
         print "Usage: main.py --username=<login> --password=<password> --server=<server_address> [options]"
@@ -62,7 +62,8 @@ def GetOptsMap():
     assert "username" in opts_map
 
     if "password" not in opts_map:
-        opts_map["password"] = getpass.getpass(prompt="Password for %s: " % opts_map["username"])
+        opts_map["password"] = getpass.getpass(
+            prompt="Password for %s: " % opts_map["username"])
 
     print opts_map
 
@@ -81,7 +82,8 @@ def GetMessageInfos(opts):
             m = mail.MailBoxPackageInfo(opts["mailboxpackage"])
         else:
             m = mail.Mail(
-                opts["server"], "use_ssl" in opts, opts["username"], opts["password"],
+                opts["server"], "use_ssl" in opts, opts[
+                    "username"], opts["password"],
                 "record" in opts, "replay" in opts,
                 "max_messages" in opts and int(opts["max_messages"]) or -1,
                 "random_subset" in opts,)
@@ -93,7 +95,7 @@ def GetMessageInfos(opts):
 
     # Then for each mailbox, see which messages are in it, and attach that to
     # the mail info
-    #if "skip_labels" not in opts:
+    # if "skip_labels" not in opts:
 
         # Don't want to parse all these dates, since we already have them from the
         # message infos above.
@@ -107,11 +109,13 @@ def GetMessageInfos(opts):
         m.SelectMailbox(mailbox)
         mb_message_infos = m.GetMessageInfos()
         for message_info in mb_message_infos:
-                message_info.AddMailbox(mailbox)
+            message_info.AddMailbox(mailbox)
         message_infos.extend(mb_message_infos)
-        logging.info("Mailbox had %d messages. Total=%d",len(mb_message_infos),len(message_infos))
+        logging.info("Mailbox had %d messages. Total=%d", len(
+            mb_message_infos), len(message_infos))
 
-    message_infos_by_id = dict([(mi.GetMessageId(), mi) for mi in message_infos])
+    message_infos_by_id = dict(
+        [(mi.GetMessageId(), mi) for mi in message_infos])
     messageinfo.MessageInfo.SetParseDate(True)
 
     m.Logout()
@@ -123,7 +127,8 @@ def GetMessageInfos(opts):
     # Tag messages as being from the user running the script
     if "me" in opts:
         logging.info("Identifying \"me\" messages")
-        me_addresses = [address.lower().strip() for address in opts["me"].split(",")]
+        me_addresses = [address.lower().strip()
+                        for address in opts["me"].split(",")]
 
         me_from_count = 0
         me_to_count = 0
@@ -175,7 +180,7 @@ def FilterMessageInfos(message_infos, filter_param):
                 raise AssertionError("unknown operator: %s" % operator)
 
             values = [name and name.lower() or "" for name, address in pairs] + \
-                        [address and address.lower() or "" for name, address in pairs]
+                [address and address.lower() or "" for name, address in pairs]
 
             for value in values:
                 if value.find(operator_value) != -1:
@@ -210,7 +215,8 @@ def ExtractThreads(message_infos):
     for subject, container in thread_dict.items():
         # jwzthreading is too aggressive in threading by subject and will combine
         # distinct threads that happen to have the same subject. Split them up if
-        # we have a dummy container that has lots of children at the first level.
+        # we have a dummy container that has lots of children at the first
+        # level.
         if container.is_dummy() and len(container.children) >= 10:
             for child_container in container.children:
                 child_container.subject = subject
@@ -253,7 +259,8 @@ def InitStats(date_range):
                 ),
                 stats.group.StatColumnGroup(
                     stats.table.RecipientTableStat(),
-                    stats.group.RecipientDistributionStatCollection(date_range),
+                    stats.group.RecipientDistributionStatCollection(
+                        date_range),
                 ),
                 stats.group.StatColumnGroup(
                     stats.table.ListIdTableStat(),
@@ -264,7 +271,8 @@ def InitStats(date_range):
                 "Me",
                 stats.group.StatColumnGroup(
                     stats.table.MeRecipientTableStat(),
-                    stats.group.MeRecipientDistributionStatCollection(date_range),
+                    stats.group.MeRecipientDistributionStatCollection(
+                        date_range),
                 ),
                 stats.group.StatColumnGroup(
                     stats.table.MeSenderTableStat(),
@@ -301,6 +309,7 @@ threads = ExtractThreads(message_infos)
 stats = InitStats(messageinfo.MessageInfo.GetDateRange())
 
 logging.info("Generating stats")
+
 for stat in stats:
     stat.ProcessMessageInfos(message_infos, threads)
 

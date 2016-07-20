@@ -62,8 +62,9 @@ class Container:
         ##print "as children of: "
         ##print_container(self, 0, True)
 
-        if child.parent:
+        if child.parent is not None:
             child.parent.remove_child(child)
+
         self.children.append(child)
         child.parent = self
 
