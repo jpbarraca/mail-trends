@@ -387,9 +387,9 @@ class MailBoxPackageInfo(object):
 
         info = []
         for mbox in boxes:
-            logging.debug("GetMessages from Mailbox: %s", mbox)
+            #logging.debug("GetMessages from Mailbox: %s", mbox)
             for path in self.mailboxes[mbox]:
-                logging.debug("ReadMessage: %s", path)
+                #logging.debug("ReadMessage: %s", path)
 
                 mi = messageinfo.MessageInfo()
                 try:
@@ -412,7 +412,7 @@ class MailBoxPackageInfo(object):
                     mi.PopulateField('RFC822.HEADER', self.__BuildHeader(msg))
 
                     if "Date" not in msg:
-                        logging.info("ERROR: Unable to parse file: %s", path)
+                        #logging.info("ERROR: Unable to parse file: %s", path)
                         continue
 
                     date = email.utils.parsedate_tz(msg["Date"])
@@ -422,8 +422,9 @@ class MailBoxPackageInfo(object):
 
                     info.append(mi)
                 except:
-                        logging.info("ERROR: Unable to parse file: %s", path)
-
+                    #logging.info("ERROR: Unable to parse file: %s", path)
+                    pass
+                    
         return info
 
     def __BuildHeader(self, msg):

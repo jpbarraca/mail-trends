@@ -61,7 +61,7 @@ class Container:
         ##print_container(child, 0, True)
         ##print "as children of: "
         ##print_container(self, 0, True)
-        
+
         if child.parent:
             child.parent.remove_child(child)
         self.children.append(child)
@@ -71,7 +71,7 @@ class Container:
         self.children.remove(child)
         child.parent = None
 
-    def has_descendant (self, ctr):
+    def has_descendant (self, ctr, seen=[]):
         """(Container): bool
 
         Returns true if 'ctr' is a descendant of this Container.
@@ -79,23 +79,75 @@ class Container:
         # To avoid recursing indefinitely, we'll do a depth-first search;
         # 'seen' tracks the containers we've already seen, and 'stack'
         # is a deque containing containers that we need to look at.
-        stack = deque()
-        stack.append(self)
-        seen = set()
-        while stack:
-            node = stack.pop()
-            if node is ctr:
+        seen.append(self)
+
+        for c in self.children:
+            if c in seen:
+                continue
+
+            if c is ctr:
                 return True
-            seen.add(node)
-            for child in node.children:
-                if child not in seen:
-                    stack.append(child)
+
+            r = c.has_descendant(ctr, seen)
+            if r:
+                return True
+
         return False
 
-    def __len__(self):
+    def is_related(self, ctr):
+        """(Container): bool
+
+        Returns true if 'ctr' is a ascendant of this Container.
+        """
+        # To avoid recursing indefinitely, we'll do a depth-first search;
+        # 'seen' tracks the containers we've already seen, and 'stack'
+        # is a deque containing containers that we need to look at.
+        node = self
+
+        # Go up
+        while node.parent is not None:
+            if node is ctr:
+                return True
+
+            node = node.parent
+
+        # Search down
+        if node.has_descendant(ctr):
+            return True
+
+        return False
+
+
+
+    def purge(self, prev=None):
+        if prev is None:
+            prev = {self: True}
+        else:
+            prev[self] = True
+
+        for c in self.children:
+            if c in prev:
+                print_container(c, 0, True)
+                self.remove_child(c)
+            else:
+                c.purge(prev)
+
+
+    def __len__(self, prev=None):
+        if prev is None:
+            prev = {self: True}
+        else:
+            prev[self] = True
+
         count = 1
         for c in self.children:
-            count += len(c)
+            if c in prev:
+                #print "BUG: LOOP DETECTED"
+                #print_container(c, 10, True)
+                # TODO: Fix this hack
+                self.remove_child(c)
+            else:
+                count += c.__len__(prev)
         return count
 
 def uniq(alist):
@@ -243,10 +295,10 @@ def thread (msglist):
 
             if prev is not None:
                 #If they are already linked, don't change the existing links.
-                if container.parent!=None:
+                if container.parent is not None:
                     pass
                 # Don't add link if it would create a loop
-                elif container is this_container or container.has_descendant(prev) or prev.has_descendant(container):
+                elif container is this_container or prev.has_descendant(container) or container.has_descendant(container):
                     pass
                 else:
                     prev.add_child(container)
@@ -266,13 +318,14 @@ def thread (msglist):
     # 2. Find root set
     root_set = [container for container in id_table.values()
                 if container.parent is None]
-
+    
     # 3. Delete id_table
     del id_table
 
     # 4. Prune empty containers
     for container in root_set:
         assert container.parent == None
+
 
     ##print 'before'
     ##for ctr in root_set:
@@ -345,18 +398,21 @@ def thread (msglist):
     return subject_table
 
 
-def print_container(ctr, depth=0, debug=0):
+def print_container(ctr, depth=-1, debug=0, indent=0):
     import sys
-    sys.stdout.write(depth*' ')
+    if depth == 0:
+        return
+
+    sys.stdout.write(' ' * indent)
     if debug:
         # Printing the repr() is more useful for debugging
         sys.stdout.write(repr(ctr) + ' ' + repr(ctr.message and ctr.message.subject))
     else:
         sys.stdout.write(repr(ctr.message and ctr.message.subject))
 
-    sys.stdout.write('\n')
+    sys.stdout.write("\n")
     for c in ctr.children:
-        print_container(c, depth+1, debug)
+        print_container(c, depth-1, debug, indent+1)
 
 
 def main():
