@@ -270,7 +270,7 @@ class MaildirInfo(object):
                     headers = StringIO()
                     while True:
                         line = fd.readline()
-                        if line == '\n' or line is None:
+                        if line == '\n' or line == '':
                             break
                         headers.write(line)
                     fd.close()
@@ -399,7 +399,7 @@ class MailBoxPackageInfo(object):
                     headers = StringIO()
                     while True:
                         line = fd.readline()
-                        if line == '\n' or line is None:
+                        if line == '\n' or line == '':
                             break
                         headers.write(line)
                     fd.close()
