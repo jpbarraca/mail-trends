@@ -70,7 +70,7 @@ def GetOptsMap():
     assert "password" in opts_map
     assert "server" in opts_map
 
-    return op
+    return opts_map
 
 
 def GetMessageInfos(opts):
