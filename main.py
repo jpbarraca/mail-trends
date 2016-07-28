@@ -45,7 +45,7 @@ def GetOptsMap():
         print "\t--filter_out=<filter>\t\tRegular expression to filter results"
         print "\t--me=<address>\t\t\tYour email address"
         print "\t--use_ssl\t\t\tConnect to server using SSL"
-        print "\t--server_mailbox=<inbox,mb1>\tOnly consider the given mailboxes in IMAP server"
+        print "\t--server_mailbox=<inbox,mb1>\tOnly consider the given mailboxes (or label)"
         print "\n"
         sys.exit()
 
