@@ -58,11 +58,14 @@ class Mail(object):
             logging.info("Found %s",name)
             mailboxes.append(name)
 
+        mailboxes.remove('[Gmail]')
+
         return mailboxes
 
     def SelectMailbox(self, mailbox):
         logging.info("Selecting mailbox '%s'", mailbox)
-        r, data = self.__mail.select(mailbox)
+        r, data = self.__mail.select(mailbox, readonly=True)
+
         self.__AssertOk(r)
 
         self.__current_mailbox = mailbox
