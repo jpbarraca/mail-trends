@@ -55,10 +55,10 @@ class Mail(object):
             s.ConsumeAll(" ")
             name = s.ConsumeValue()
 
-            logging.info("Found %s",name)
-            mailboxes.append(name)
+            logging.info("Found %s", name)
 
-        mailboxes.remove('[Gmail]')
+            if name != '[Gmail]':
+                mailboxes.append(name)
 
         return mailboxes
 
